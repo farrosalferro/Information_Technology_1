@@ -1,0 +1,5 @@
+*.bin
+data/
+notebooks/featureout
+notebooks/weights
+*.pyc
