@@ -1,5 +1,5 @@
 *.bin
-data/
+data/*
 notebooks/featureout
 notebooks/weights
 *.pyc

@@ -1,6 +1,19 @@
 # Image Matching Challenge 2025
 Farros Alferro (C4IM2502)
 
+github repository: https://github.com/farrosalferro/Information_Technology_1
+
+Please install the required packages to run the notebooks
+
+```bash
+conda create -n it1 python=3.10 -y # (if you use conda virtual environment)
+pip install -r requirements.txt
+mkdir data
+mkdir notebooks/weights
+```
+
+Download the data from the [competition](https://www.kaggle.com/competitions/image-matching-challenge-2025/data) and put it under the `data` directory. To run `dino_clustering.ipynb`, please download the DINOv2 weight from Kaggle from this [link](https://www.kaggle.com/models/metaresearch/dinov2/PyTorch/base/1). Extract the weight and put it under `notebooks/weights` folder.
+
 ## Project Update 1
 
 ## What is Image Matching Challenge?
@@ -11,7 +24,7 @@ Farros Alferro (C4IM2502)
 - What do the participants do?
   - "Develop machine learning **algorithms** that can figure out which **images belong together** and use them to **reconstruct accurate 3D scenes**."
 
-![Challenge Outline](challenge_outline.png)
+![Challenge Outline](assets/figures/challenge_outline.png)
 
 ### In a More Formal Way
 - Each set (training is given, test is hidden)
@@ -22,7 +35,7 @@ Farros Alferro (C4IM2502)
   - The camera poses of each image ($R$ and $T$).
   - Cluster $C_{kj}$ where the image belongs to. If there is no cluster, identify it as "outlier".
 
-![Challenge Formal](challenge_formal.png)
+![Challenge Formal](assets/figures/challenge_formal.png)
 
 ## Metrics
 ### Mean Average Accuracy (mAA)
@@ -52,11 +65,11 @@ The combined score $S_k$ is the harmonic mean of the mAA and clustering scores. 
   - There are 30 scenes with 'ouliers' scenes across 4 datasets.
   - 1945 images in total with average resolution of (1101, 982) and 122 outlier images.
 
-![Data Distribution](data_distribution.png)
+![Data Distribution](assets/figures/data_distribution.png)
 
 Here are some examples from dataset `imc2024_dioscuri_baalshamin`
 
-![Dioscurin Baalshamin Examples](dioscuri_baalshamin_examples.png)
+![Dioscurin Baalshamin Examples](assets/figures/dioscuri_baalshamin_examples.png)
 
 ## Methods
 
@@ -66,7 +79,7 @@ The competition commitee published a minimum jupyter notebook that processes the
 1. [DINOv2](https://arxiv.org/abs/2304.07193) to find pairs of similar images. This is done by taking the normalized image embeddings, then the distances between all image embeddings are calculated and only keep those below a given threshold.
 2. [ALIKED](https://arxiv.org/abs/2304.03608) to extract relevant keypoints and their descriptors. Alternatively, we can use more traditional method like SIFT.
 
-![ALIKEDKeypoint Extractor](keypoint_extractor.png)
+![ALIKEDKeypoint Extractor](assets/figures/keypoint_extractor.png)
 
 3. [LightGlue](https://arxiv.org/abs/2306.13643) to find a good relationship between images in a pair. This model matches the keypoints and their descriptors between two images.
 4. [RANSAC](https://web.archive.org/web/20230204054340/http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.106.3035&rep=rep1&type=pdf) to remove outliers (not image outliers like the one described in the introduction, this one refers to image pairs that are redundant or noisy). It finds the best possible fundamental matrix $F$, then the matrix with maximum number of inliers is chosen.
@@ -97,19 +110,19 @@ My work builds upon the baseline approach. Specifically, I was interested in app
 To evaluate how well the `[CLS]` token performs in clustering, I visualized the resulting clusters. I first extracted the `[CLS]` token and normalized it across the channel dimension. Then, I reduced the embedding dimension from 768 to 2 using [t-SNE](https://www.jmlr.org/papers/volume9/vandermaaten08a/vandermaaten08a.pdf) with a perplexity value of 15. Since the number of clusters is unknown in the test set (though known in the training set), I used [HDBSCAN](https://hdbscan.readthedocs.io/en/latest/) for clustering. HDBSCAN also includes outlier detection, which allowed us to identify images that belong to 'outlier' scenes. Finally, I plotted the predicted clusters against the ground truth.
 
 
-![Proposed Method 1 Haiper](proposed_method_1_haiper.png)
+![Proposed Method 1 Haiper](assets/figures/proposed_method_1_haiper.png)
 
-![Proposed Method 1 Buckingham](proposed_method_1_british_buckingham.png)
+![Proposed Method 1 Buckingham](assets/figures/proposed_method_1_british_buckingham.png)
 
 However, there are more scenes with bad cluster predictions.
 
-![Proposed Method 1 Dioscuri](proposed_method_1_dioscuri.png)
+![Proposed Method 1 Dioscuri](assets/figures/proposed_method_1_dioscuri.png)
 
-![Proposed Method 1 St Peters](proposed_method_1_stpaul.png)
+![Proposed Method 1 St Peters](assets/figures/proposed_method_1_stpaul.png)
 
 There are also some cases where it's difficult to do clustering
 
-![Proposed Method 1 Vineyard](proposed_method_1_vineyard.png)
+![Proposed Method 1 Vineyard](assets/figures/proposed_method_1_vineyard.png)
 
 There are several plausible reasons why the clustering algorithm may not be performing as expected. One possibility is that using the [CLS] token embedding may not be an effective way to represent image features. Additionally, in some cases, images appear very similar even though they belong to different scenes (e.g., as shown in the vineyard plot). Clustering based on high-level features might work well for scenes with clearly distinct characteristics, but it may not be effective for images with high visual similarity.
 Another possible reason lies in the clustering algorithm itself. I'm not entirely sure how HDBSCAN works, but it might not be well-suited for this type of embedding.
@@ -139,15 +152,15 @@ As expected, the performance is significantly worse compared to the baseline. Fr
 
 In my second method, I tried simpler models and pipeline as the previous approach usually takes pretty much time and often my PC went out of memory. Here are the details of the pipeline:
 
-1. Unlike in previous approach where I use DINOv2 to find similar pairs and ALIKED for extracting keypoints and descriptors, I use non deep learning model called SIFT. The reason of choosing this feature extractor is because it is known for its robustness.
+1. Unlike in previous approach where I use DINOv2 to find similar pairs and ALIKED for extracting keypoints and descriptors, I use non deep learning model called [SIFT](https://en.wikipedia.org/wiki/Scale-invariant_feature_transform). The reason of choosing this feature extractor is because it is known for its robustness.
 
-2. I replaced the LightGlue with a Nearest-Neighbor-based matching called FLANN. Not only this matcher works good with SIFT feature extractor, but it's also known for its speed and it works well with large datasets.
+2. I replaced the LightGlue with a Nearest-Neighbor-based matching called [FLANN](https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html). Not only this matcher works good with SIFT feature extractor, but it's also known for its speed and it works well with large datasets.
 
 3. To remove outlier I still use RANSAC, which is pretty much the same like in previous approach (via epipolar constraint). This step outputs inlier matches / matched keypoints.
 
 4. To determine the ouliers and do clustering, I constructed a graph where the nodes are the images. There is an edge between two images if they have a sufficient number of inlier matches. Then, I clustered the nodes by setting a threshold of minimum number of connected components. Each of this partition represents a cluster. On the other hand, nodes with very low degree (if it's degree is lower than a threshold), it will be marked as an outlier.
 
-5. Now that we have the cluster, we need to estimate the camera poses. To do this, I use a minimal implementation of PnP (perspective-n-point) using the SIFT keypoint and FLANN matching. Unlike in COLMAP, where it employes bundle adjustment (registering image step-by-step), PnP gives every single camera pose from 2D to 3D. With this, I can avoid the heavy computation induces by bundle adjustment as it revisits all poses and points multiple times.
+5. Now that we have the cluster, we need to estimate the camera poses. To do this, I use a minimal implementation of [PnP](https://docs.opencv.org/4.x/d5/d1f/calib3d_solvePnP.html) (perspective-n-point) using the SIFT keypoint and FLANN matching. Unlike in COLMAP, where it employes bundle adjustment (registering image step-by-step), PnP gives every single camera pose from 2D to 3D. With this, I can avoid the heavy computation induces by bundle adjustment as it revisits all poses and points multiple times.
 
 Overall, this method provides simpler approach where I used more traditional tools like SIFT and FLANN. Moreover, I didn't employ any deep learning model in this method.
 
@@ -174,4 +187,4 @@ In my opinion, this issue might be resolved by tuning the hyperparameters. Howev
 
 ## Next Plan
 * Visualize the graph
-* Use end-to-end deep learning model (VGGT)
+* Use end-to-end deep learning model ([VGGT](https://vgg-t.github.io/))
