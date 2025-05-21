@@ -216,6 +216,7 @@ def feature_reducer(
 
     return reducer.fit_transform(features)
 
+
 def get_feature_extractor(extractor_type='SIFT', nfeatures=8000):
     """Creates the specified OpenCV feature extractor."""
     if extractor_type == 'SIFT':
@@ -228,6 +229,7 @@ def get_feature_extractor(extractor_type='SIFT', nfeatures=8000):
     # Add other types like BRISK if needed
     else:
         raise ValueError(f"Unsupported feature extractor type: {extractor_type}")
+
 
 def extract_features(image_path, extractor):
     """Extracts keypoints and descriptors from an image file."""
@@ -249,6 +251,7 @@ def extract_features(image_path, extractor):
          return None, None, (w,h)
 
     return kps, descs, (w, h) 
+
 
 def load_and_extract_features_dataset(dataset_id, dataset_base_path, extractor):
     """Loads all images for a dataset and extracts features."""
