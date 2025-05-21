@@ -6,10 +6,21 @@ github repository: https://github.com/farrosalferro/Information_Technology_1
 Please install the required packages to run the notebooks
 
 ```bash
-conda create -n it1 python=3.10 -y # (if you use conda virtual environment)
+# if you use conda virtual environment
+conda create -n it1 python=3.10 -y
+conda activate it1
+
+# install packages
+python -m pip install --upgrade pip
 pip install -r requirements.txt
+
+# create necessary directories
 mkdir data
 mkdir notebooks/weights
+
+# if you want to run vgg notebook, install vgg packages
+cd vggt
+pip install -e .
 ```
 
 Download the data from the [competition](https://www.kaggle.com/competitions/image-matching-challenge-2025/data) and put it under the `data` directory. To run `dino_clustering.ipynb`, please download the DINOv2 weight from Kaggle from this [link](https://www.kaggle.com/models/metaresearch/dinov2/PyTorch/base/1). Extract the weight and put it under `notebooks/weights` folder.
