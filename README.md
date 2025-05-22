@@ -17,13 +17,18 @@ pip install -r requirements.txt
 # create necessary directories
 mkdir data
 mkdir notebooks/weights
+mkdir notebooks/vggt_features
 
 # if you want to run vgg notebook, install vgg packages
 cd vggt
 pip install -e .
 ```
 
-Download the data from the [competition](https://www.kaggle.com/competitions/image-matching-challenge-2025/data) and put it under the `data` directory. To run `dino_clustering.ipynb`, please download the DINOv2 weight from Kaggle from this [link](https://www.kaggle.com/models/metaresearch/dinov2/PyTorch/base/1). Extract the weight and put it under `notebooks/weights` folder.
+Download the data from the [competition](https://www.kaggle.com/competitions/image-matching-challenge-2025/data) and put it under the `data` directory. 
+
+* To run `dino.ipynb`, please download the DINOv2 weight from Kaggle in this [link](https://www.kaggle.com/models/metaresearch/dinov2/PyTorch/base/1). Extract the weight and put it under `notebooks/weights` folder.
+
+* To run `vgg.ipynb`, please download the weight from HuggingFace in this [link](https://huggingface.co/facebook/VGGT-1B). Extract the weight and put it under `notebooks/weights` folder. Since the extracting the embedding requires lot of VRAM memory, I already extracted it (only the last layer) and put it [here](https://huggingface.co/datasets/farrosalferro24/imc2025_vggt_last_features). Please download it and put it inside the `notebooks/vggt_features` folder.
 
 ## Project Update 1
 

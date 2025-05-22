@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from tqdm import tqdm
+import torch
 from ..features.matching import match_and_verify
 
 def get_default_camera_matrix(img_width, img_height, default_focal_length=1.2):
@@ -12,6 +13,7 @@ def get_default_camera_matrix(img_width, img_height, default_focal_length=1.2):
                   [0, f, cy],
                   [0, 0, 1]], dtype=np.float32)
     return K
+
 
 def estimate_poses_for_cluster(cluster_image_ids, features, image_dims, matcher, pairwise_matches, min_inlier_matches=15, ransac_threshold=1.5, min_views_for_triangulation=3, min_3d_points_for_pnp=6, pnp_ransac_threshold=5.0, pnp_confidence=0.999):
     """
@@ -293,6 +295,7 @@ def estimate_poses_for_cluster(cluster_image_ids, features, image_dims, matcher,
     print(f"Finished SfM for cluster. Registered {len(registered_poses)} out of {num_images_in_cluster} images.")
     return final_poses
 
+
 def format_pose(R, T):
     """Formats rotation matrix R and translation vector T into the required submission string format."""
     if R is None or T is None or np.isnan(R).any() or np.isnan(T).any():
@@ -304,3 +307,39 @@ def format_pose(R, T):
 
     return R.flatten(), T
 
+
+def quat_to_cam_pose(q: torch.Tensor, eps: float = 1e-8):
+    """
+    Convert VGGT's (quaternion, translation) output to a 3×3 rotation matrix R
+    and camera centre C, using PyTorch operations only.
+
+    Parameters
+    ----------
+    q : (..., 4) torch.Tensor
+        Quaternion in (w, x, y, z) order.  Batch dimensions (if any) are allowed.
+    T : (..., 3) torch.Tensor
+        Translation vector in the same batch shape as `q`.
+    eps : float
+        Small constant to avoid division by zero during normalisation.
+
+    Returns
+    -------
+    R : (..., 3, 3) torch.Tensor
+        Rotation matrix (world → camera).
+    C : (..., 3) torch.Tensor
+        Camera centre in world coordinates, C = -Rᵀ T.
+    """
+    # 1 ── normalise quaternion
+    q = q / (q.norm(dim=-1, keepdim=True).clamp_min(eps))
+
+    w, x, y, z = q.unbind(dim=-1)
+
+    # 2 ── quaternion → rotation matrix
+    # each term is broadcast automatically over leading dimensions
+    R = torch.stack([
+        torch.stack([1 - 2*(y*y + z*z),  2*(x*y - w*z),      2*(x*z + w*y)], dim=-1),
+        torch.stack([2*(x*y + w*z),      1 - 2*(x*x + z*z),  2*(y*z - w*x)], dim=-1),
+        torch.stack([2*(x*z - w*y),      2*(y*z + w*x),      1 - 2*(x*x + y*y)], dim=-1)
+    ], dim=-2)        # shape (..., 3, 3)
+
+    return R
